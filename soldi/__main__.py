@@ -3,7 +3,6 @@
 """
 import yaml
 import click
-from .transition import MoneyTransition
 from .table import *
 from .interactive import *
 from .utils import *
