@@ -7,10 +7,11 @@ from .table import *
 from .interactive import *
 from .utils import *
 
+
 @click.group()
 def main():
-    print("Hello, Soldi")
-
+    checker = ConfigChecker()
+    checker.check()
 
 def interactive_mode():
     interactive = Interactive()

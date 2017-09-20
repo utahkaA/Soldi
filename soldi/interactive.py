@@ -8,15 +8,15 @@ import click
 from .table import *
 from .utils import *
 
-class Interactive(object):
+class Interactive(Config):
     def __init__(self):
+        super().__init__()
         self.inputed_event_records = pd.DataFrame(index=[], columns=Event().cols)
         self.inputed_receipt_records = pd.DataFrame(index=[], columns=Receipt().cols)
 
     def info(self):
-        if exist_config_dir():
-            click.echo("=== Interactive Mode ===")
-            click.echo("Insert data into soldi database based on your interactive input.")
+        click.echo("=== Interactive Mode ===")
+        click.echo("Insert data into soldi database based on your interactive input.")
 
     def prompt(self):
         while True:
@@ -25,39 +25,39 @@ class Interactive(object):
             self.inputed_event_records = self.inputed_event_records.append(event_record,
                                                                            ignore_index=True)
 
-            msg = "\n[Soldi] You can input receipt information of your inputed event."
-            click.echo(msg)
-            if click.confirm("Do you want to continue?"):
-                receipt_prompt = ReceiptPrompt()
-                receipt_record = receipt_prompt.start(event_record['_id'])
-                self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
-                                                          receipt_record],
-                                                          ignore_index=True)
-            if not click.confirm("Would you like to register other event data?"):
+            if event_record['_kind'] == "outgo":
+                msg = "\n" + soldi + \
+                      " You can input receipt information of your inputed event."
+                click.echo(msg)
+                if click.confirm(soldi + " Do you want to continue?"):
+                    receipt_prompt = ReceiptPrompt()
+                    receipt_record = receipt_prompt.start(event_record['_id'])
+                    self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
+                                                              receipt_record],
+                                                              ignore_index=True)
+
+            if not click.confirm("\n" + soldi + " Would you like to register other event data?"):
                 break
 
         # Write out DataFrame
-        if exist_config_dir():
-            soldi_config_dir = path.expanduser("~/.soldi")
-            path_to_csv = "{0}/{1}".format(soldi_config_dir, "data/")
-            path_to_event = path_to_csv + "event.csv"
-            path_to_receipt = path_to_csv + "receipt.csv"
+        path_to_event = self.path_to_csv + "event.csv"
+        path_to_receipt = self.path_to_csv + "receipt.csv"
 
-            if path.isfile(path_to_event):
-                with open(path_to_event, 'a') as stream:
-                    self.inputed_event_records.to_csv(stream,
-                                                      index=False, header=False)
-            else:
-                self.inputed_event_records.to_csv(path_to_event,
-                                                  index=False, header=True)
+        if path.isfile(path_to_event):
+            with open(path_to_event, 'a') as stream:
+                self.inputed_event_records.to_csv(stream,
+                                                  index=False, header=False)
+        else:
+            self.inputed_event_records.to_csv(path_to_event,
+                                              index=False, header=True)
 
-            if path.isfile(path_to_receipt):
-                with open(path_to_receipt, 'a') as stream:
-                    self.inputed_receipt_records.to_csv(stream,
-                                                        index=False, header=False)
-            else:
-                self.inputed_receipt_records.to_csv(path_to_receipt,
-                                                    index=False, header=True)
+        if path.isfile(path_to_receipt):
+            with open(path_to_receipt, 'a') as stream:
+                self.inputed_receipt_records.to_csv(stream,
+                                                    index=False, header=False)
+        else:
+            self.inputed_receipt_records.to_csv(path_to_receipt,
+                                                index=False, header=True)
 
 
 class EventPrompt(object):
@@ -79,7 +79,7 @@ class EventPrompt(object):
                 if not col in ['_from', '_to']:
                     record[col] = parsers[col]()
                     if col == '_kind':
-                        msg = "\n[Soldi] Your inputed event record's kind is '{0}'" \
+                        msg = "\n" + soldi + " Your inputed event record's kind is '{0}'" \
                               " so please its {0} information."
                         click.echo(msg.format(record['_kind']))
                 else:
