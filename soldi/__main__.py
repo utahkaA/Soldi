@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """ The main entry point.
 """
-import yaml
 import click
 from .table import *
 from .interactive import *
+from .plot import *
 from .utils import *
 
 
@@ -21,3 +21,8 @@ def interactive_mode():
 @main.command()
 def insert():
     interactive_mode()
+
+@main.command()
+def plot():
+    plotter = Plotter()
+    plotter.plot()
