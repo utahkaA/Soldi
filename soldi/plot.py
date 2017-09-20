@@ -110,7 +110,8 @@ class Plotter(Config):
         ax4.legend()
 
         plt.tight_layout()
-        plt.show()
+        figure_name = "{0}/{1}.png".format(self.path_to_figure, self.today)
+        plt.savefig(figure_name)
 
     def _asset(self):
         dtrange = self.dtrange

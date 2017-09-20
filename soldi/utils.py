@@ -22,18 +22,17 @@ class Config(object):
     def __init__(self):
         self.soldi_config_dir = path.expanduser("~/.soldi")
         self.path_to_csv = "{0}/{1}".format(self.soldi_config_dir, "data/")
+        self.path_to_figure = "{0}/{1}".format(self.soldi_config_dir, "figures/")
 
 class ConfigChecker(Config):
     def __init__(self):
         super().__init__()
-        # self.soldi_config_dir = path.expanduser("~/.soldi")
-        # self.path_to_csv = "{0}/{1}".format(self.soldi_config_dir, "data/")
 
     def check(self):
         # Check whether a config directory exists.
         if not exist_config_dir():
             click.echo(soldi +
-                       color.WARNING.format(" A config directory '~/.soldi' doesn't exist"))
+                       color.WARNING.format(" A config directory '~/.soldi' doesn't exist."))
             if make_config_dir():
                 click.echo(soldi +
                            color.SUCCESS.format(" Successfully made configure directory."))
@@ -45,11 +44,25 @@ class ConfigChecker(Config):
         if not path.isdir(self.path_to_csv):
             click.echo(soldi +
                        color.WARNING.format(" A directory which store data csv doesn't exist " \
-                                            "in '~/.soldi' so Soldi will make that directory"))
+                                            "in '~/.soldi' so Soldi will make that directory."))
             try:
                 os.mkdir(self.path_to_csv)
                 click.echo(soldi +
-                           color.SUCCESS.format(" Successfully made configure directory"))
+                           color.SUCCESS.format(" Successfully made configure directory."))
+            except:
+                click.echo(soldi +
+                           color.ERROR.format(" Making configure directory was failure."))
+
+        # Check whether a directory which store plot figures exists in '~/.soldi'.
+        if not path.isdir(self.path_to_figure):
+            click.echo(soldi +
+                       color.WARNING.format(" A directory which store plot figures doesn't " \
+                                            "exist in '~/.soldi' so Soldi will make that " \
+                                            "directory."))
+            try:
+                os.mkdir(self.path_to_figure)
+                click.echo(soldi +
+                           color.SUCCESS.format(" Successfully made configure directory."))
             except:
                 click.echo(soldi +
                            color.ERROR.format(" Making configure directory was failure."))
