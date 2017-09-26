@@ -54,10 +54,11 @@ class Plotter(Config):
                 label = labels[col] if col in labels else kind
                 pred_df[col].plot(ax=ax, color=color, linestyle="dashed",
                                   label="__nolegend__")
-            title = "Asset: {0} (Pred: {1})".format(act_annotation,
-                                                    pred_annotation)
+            title = "{0}: {1} (Pred: {2})".format(kind,
+                                                  act_annotation,
+                                                  pred_annotation)
         else:
-            title = "Asset: {0}".format(act_annotation)
+            title = "{0}: {1}".format(kind, act_annotation)
         ax.set_title(title)
         ax.legend()
 
