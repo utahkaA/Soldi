@@ -33,6 +33,34 @@ class Plotter(Config):
         dtrange = pd.date_range(start=start, end=end, freq='D')
         return dtrange
 
+    def _plot(self, ax, act_df, pred_df, kind):
+        colors = {"asset": "#cc2e41", "income": "#412ecc", "outgo": "#2ecc41"}
+        labels = {"income": "Income", "outgo": "Outgo"}
+
+        # check actually last value.
+        act_last = act_df.asset[-1]
+        act_annotation = str(act_last)
+        for col in act_df.columns:
+            color = colors[col]
+            label = labels[col] if col in labels else kind
+            act_df[col].plot(ax=ax, color=color, label=label)
+
+        if pred_df.size > 0:
+            # check predict asset's last value.
+            pred_last = pred_df.asset[-1]
+            pred_annotation = str(pred_last)
+            for col in pred_df.columns:
+                color = colors[col]
+                label = labels[col] if col in labels else kind
+                pred_df[col].plot(ax=ax, color=color, linestyle="dashed",
+                                  label="__nolegend__")
+            title = "Asset: {0} (Pred: {1})".format(act_annotation,
+                                                    pred_annotation)
+        else:
+            title = "Asset: {0}".format(act_annotation)
+        ax.set_title(title)
+        ax.legend()
+
     def plot(self):
         act_asset_df, pred_asset_df = self._asset()
         act_inbank_df, pred_inbank_df = self._bank()
@@ -45,81 +73,10 @@ class Plotter(Config):
         ax3 = fig.add_subplot(223)
         ax4 = fig.add_subplot(224)
 
-        # --- Asset ---
-        act_asset_df.asset.plot(ax=ax1, color="#cc2e41", label="Asset")
-        act_asset_df.income.plot(ax=ax1, color="#412ecc", label="Income")
-        act_asset_df.outgo.plot(ax=ax1, color="#2ecc41", label="Outgo")
-        if pred_asset_df.size > 0:
-            asset_last = pred_asset_df.asset[-1]
-            asset_annotation = str(asset_last)
-            pred_asset_df.asset.plot(ax=ax1, color="#cc2e41", linestyle='dashed',
-                                     label="__nolegend__")
-            pred_asset_df.income.plot(ax=ax1, color="#412ecc", linestyle='dashed',
-                                      label="__nolegend__")
-            pred_asset_df.outgo.plot(ax=ax1, color="#2ecc41", linestyle='dashed',
-                                     label="__nolegend__")
-        else:
-            asset_last = act_asset_df.asset[-1]
-            asset_annotation = str(asset_last)
-        ax1.set_title("Asset: {}".format(asset_annotation))
-        ax1.legend()
-
-        # --- in Bank ---
-        act_inbank_df.inbank.plot(ax=ax2, color="#cc2e41", label="in Bank")
-        act_inbank_df.income.plot(ax=ax2, color="#412ecc", label="Income")
-        act_inbank_df.outgo.plot(ax=ax2, color="#2ecc41", label="Outgo")
-        if pred_inbank_df.size > 0:
-            inbank_last = pred_inbank_df.inbank[-1]
-            inbank_annotation = str(inbank_last)
-            pred_inbank_df.inbank.plot(ax=ax2, color="#cc2e41", linestyle='dashed',
-                                       label="__nolegend__")
-            pred_inbank_df.income.plot(ax=ax2, color="#412ecc", linestyle='dashed',
-                                       label="__nolegend__")
-            pred_inbank_df.outgo.plot(ax=ax2, color="#2ecc41", linestyle='dashed',
-                                      label="__nolegend__")
-        else:
-            inbank_last = act_inbank_df.inbank[-1]
-            inbank_annotation = str(inbank_last)
-        ax2.set_title("in Bank: {}".format(inbank_annotation))
-        ax2.legend()
-
-        # --- in Local ---
-        act_inlocal_df.inlocal.plot(ax=ax3, color="#cc2e41", label="in Local")
-        act_inlocal_df.income.plot(ax=ax3, color="#412ecc", label="Income")
-        act_inlocal_df.outgo.plot(ax=ax3, color="#2ecc41", label="Outgo")
-        if pred_inlocal_df.size > 0:
-            inlocal_last = pred_inlocal_df.inlocal[-1]
-            inlocal_annotation = str(inlocal_last)
-            pred_inlocal_df.inlocal.plot(ax=ax3, color="#cc2e41", linestyle='dashed',
-                                         label="__nolegend__")
-            pred_inlocal_df.income.plot(ax=ax3, color="#412ecc", linestyle='dashed',
-                                        label="__nolegend__")
-            pred_inlocal_df.outgo.plot(ax=ax3, color="#2ecc41", linestyle='dashed',
-                                       label="__nolegend__")
-        else:
-            inlocal_last = act_inlocal_df.inlocal[-1]
-            inlocal_annotation = str(inlocal_last)
-        ax3.set_title("in Local: {}".format(inlocal_annotation))
-        ax3.legend()
-
-        # --- in Wallet ---
-        act_inwallet_df.inwallet.plot(ax=ax4, color="#cc2e41", label="in Wallet")
-        act_inwallet_df.income.plot(ax=ax4, color="#412ecc", label="Income")
-        act_inwallet_df.outgo.plot(ax=ax4, color="#2ecc41", label="Outgo")
-        if pred_inwallet_df.size > 0:
-            inwallet_last = pred_inwallet_df.inwallet[-1]
-            inwallet_annotation = str(inwallet_last)
-            pred_inwallet_df.inwallet.plot(ax=ax4, color="#cc2e41", linestyle='dashed',
-                                           label="__nolegend__")
-            pred_inwallet_df.income.plot(ax=ax4, color="#412ecc", linestyle='dashed',
-                                         label="__nolegend__")
-            pred_inwallet_df.outgo.plot(ax=ax4, color="#2ecc41", linestyle='dashed',
-                                        label="__nolegend__")
-        else:
-            inwallet_last = act_inwallet_df.inwallet[-1]
-            inwallet_annotation = str(inwallet_last)
-        ax4.set_title("in Wallet: {}".format(inwallet_annotation))
-        ax4.legend()
+        self._plot(ax1, act_asset_df, pred_asset_df, kind="Asset")
+        self._plot(ax2, act_inbank_df, pred_inbank_df, kind="in Bank")
+        self._plot(ax3, act_inlocal_df, pred_inlocal_df, kind="in Local")
+        self._plot(ax4, act_inwallet_df, pred_inwallet_df, kind="in Wallet")
 
         plt.tight_layout()
         figure_name = "{0}/{1}.png".format(self.path_to_figure, self.today)
@@ -169,7 +126,7 @@ class Plotter(Config):
         inbank[:, 2] = np.cumsum(inbank[:, 2])
         inbank_df = pd.DataFrame(inbank,
                                  index=dtrange,
-                                 columns=['income', 'outgo', 'inbank'])
+                                 columns=['income', 'outgo', 'asset'])
         today = pd.to_datetime(self.today)
         act_inbank_df = inbank_df[inbank_df.index <= today]
         pred_inbank_df = inbank_df[inbank_df.index >= today]
@@ -195,7 +152,7 @@ class Plotter(Config):
         inlocal[:, 2] = np.cumsum(inlocal[:, 2])
         inlocal_df = pd.DataFrame(inlocal,
                                   index=dtrange,
-                                  columns=['income', 'outgo', 'inlocal'])
+                                  columns=['income', 'outgo', 'asset'])
         today = pd.to_datetime(self.today)
         act_inlocal_df = inlocal_df[inlocal_df.index <= today]
         pred_inlocal_df = inlocal_df[inlocal_df.index >= today]
@@ -221,7 +178,7 @@ class Plotter(Config):
         inwallet[:, 2] = np.cumsum(inwallet[:, 2])
         inwallet_df = pd.DataFrame(inwallet,
                                    index=dtrange,
-                                   columns=['income', 'outgo', 'inwallet'])
+                                   columns=['income', 'outgo', 'asset'])
         today = pd.to_datetime(self.today)
         act_inwallet_df = inwallet_df[inwallet_df.index <= today]
         pred_inwallet_df = inwallet_df[inwallet_df.index >= today]
