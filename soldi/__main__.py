@@ -7,7 +7,6 @@ from .interactive import *
 from .plot import *
 from .utils import *
 
-
 @click.group()
 def main():
     checker = ConfigChecker()
@@ -21,6 +20,11 @@ def interactive_mode():
 @main.command()
 def insert():
     interactive_mode()
+
+@main.command()
+def sort():
+    controller = TableController()
+    controller.sort()
 
 @main.command()
 def plot():
