@@ -23,6 +23,7 @@ class Config(object):
         self.soldi_config_dir = path.expanduser("~/.soldi")
         self.path_to_csv = "{0}/{1}".format(self.soldi_config_dir, "data/")
         self.path_to_figure = "{0}/{1}".format(self.soldi_config_dir, "figures/")
+        self.path_to_bak = "{0}/{1}".format(self.soldi_config_dir, "bak/")
 
 class ConfigChecker(Config):
     def __init__(self):
@@ -66,6 +67,20 @@ class ConfigChecker(Config):
             except:
                 click.echo(soldi +
                            color.ERROR.format(" Making configure directory was failure."))
+
+        # Check whether a directory which store backup files exists in '~/.soldi'.
+        if not path.isdir(self.path_to_bak):
+            click.echo(soldi +
+                       color.WARNING.format(" A directory which store backup files doesn't " \
+                                            "exist in '~/.soldi' so Soldi will make that " \
+                                            "directory."))
+            try:
+                os.mkdir(self.path_to_bak)
+                click.echo(soldi +
+                           color.SUCCESS.format(" Successfully made backup directory."))
+            except:
+                click.echo(soldi +
+                           color.ERROR.format(" Making backup directory was failure."))
 
 def exist_config_dir():
     soldi_config_dir = path.expanduser("~/.soldi")
