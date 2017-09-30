@@ -92,9 +92,16 @@ class EventPrompt(object):
         return pd.Series(record, index=self.definition.cols)
 
     def _timestamp(self):
-        msg = "input events._timestamp"
-        _ts = click.prompt(msg, prompt_suffix=suffix, type=str)
-        return dt.datetime.strptime(_ts, '%Y-%m-%d')
+        while True:
+            msg = "input events._timestamp"
+            _ts = click.prompt(msg, prompt_suffix=suffix, type=str)
+
+            try:
+                return pd.to_datetime(_ts)
+            except:
+                click.echo(soldi + color.WARNING.format(" Could you input timestamp again?" \
+                           "Its format is 'yyyy-mm-dd HH:MM:SS', 'yyyy/mm/dd HH:MM:SS'" \
+                           " and so on."))
 
     def _where(self):
         msg = "input events._where"
