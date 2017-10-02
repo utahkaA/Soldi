@@ -28,5 +28,6 @@ def sort():
 
 @main.command()
 def plot():
-    plotter = Plotter()
+    resolution = 'D'
+    plotter = Plotter(resolution)
     plotter.plot()
