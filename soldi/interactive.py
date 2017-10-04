@@ -9,14 +9,15 @@ from .table import *
 from .utils import *
 
 class Interactive(Config):
-    def __init__(self, debug=False):
+    def __init__(self, is_debug=False):
         super().__init__()
         self.inputed_event_records = pd.DataFrame(index=[], columns=Event().cols)
         self.inputed_receipt_records = pd.DataFrame(index=[], columns=Receipt().cols)
-        self.writeout = False if debug else True
+        self.is_debug = False if is_debug else True
 
     def info(self):
-        click.echo("=== Interactive Mode ===")
+        addition = "(Debug) " if not self.is_debug else ""
+        click.echo("=== Interactive Mode " + addition + "===")
         click.echo("Insert data into soldi database based on your interactive input.")
 
     def prompt(self):
@@ -37,13 +38,13 @@ class Interactive(Config):
                                                               receipt_record],
                                                               ignore_index=True)
                     # Check receipt data
-                    howmany_ser = self.inputed_receipt_records._howmany
-                    howmuch_ser = self.inputed_receipt_records._howmuch
+                    howmany_ser = receipt_record._howmany
+                    howmuch_ser = receipt_record._howmuch
                     receipt_sum = (howmany_ser * howmuch_ser).sum()
-                    if self.inputed_event_records._howmuch.iloc[-1] == receipt_sum:
+                    if event_record._howmuch == receipt_sum:
                         click.echo(soldi + \
-                                   color.SUCCESS.format("Registered receipt data successfully"))
-                    elif self.inputed_event_records._howmuch.iloc[-1] > receipt_sum:
+                                   color.SUCCESS.format(" Registered receipt data successfully"))
+                    elif event_record._howmuch > receipt_sum:
                         warning_msg = soldi + color.WARNING.format(" The amount of inputted " \
                                       "receipt is smaller than that of event data. Would you " \
                                       "like to register with this content?")
@@ -60,27 +61,40 @@ class Interactive(Config):
                 break
 
         # Write out dataframes.
-        if self.writeout:
-            path_to_event = self.path_to_csv + "event.csv"
-            path_to_receipt = self.path_to_csv + "receipt.csv"
-
+        if self.is_debug:
             ## Write out a event dataframe.
-            if path.isfile(path_to_event):
-                with open(path_to_event, 'a') as stream:
-                    self.inputed_event_records.to_csv(stream,
-                                                      index=False, header=False)
-            else:
-                self.inputed_event_records.to_csv(path_to_event,
-                                                  index=False, header=True)
-            ## Write out a receipt dataframe.
-            if path.isfile(path_to_receipt):
-                with open(path_to_receipt, 'a') as stream:
-                    self.inputed_receipt_records.to_csv(stream,
-                                                        index=False, header=False)
-            else:
-                self.inputed_receipt_records.to_csv(path_to_receipt,
-                                                    index=False, header=True)
+            self._writeout(self.inputed_event_records, "event")
 
+            ## Write out a receipt dataframe.
+            self._writeout(self.inputed_receipt_records, "receipt")
+
+            # path_to_event = self.path_to_csv + "event.csv"
+            # path_to_receipt = self.path_to_csv + "receipt.csv"
+            #
+            # if path.isfile(path_to_event):
+            #     with open(path_to_event, 'a') as stream:
+            #         self.inputed_event_records.to_csv(stream,
+            #                                           index=False, header=False)
+            # else:
+            #     self.inputed_event_records.to_csv(path_to_event,
+            #                                       index=False, header=True)
+            # if path.isfile(path_to_receipt):
+            #     with open(path_to_receipt, 'a') as stream:
+            #         self.inputed_receipt_records.to_csv(stream,
+            #                                             index=False, header=False)
+            # else:
+            #     self.inputed_receipt_records.to_csv(path_to_receipt,
+            #                                         index=False, header=True)
+
+    def _writeout(self, df, csv_name):
+        path_to_csv = self.path_to_csv + csv_name + ".csv"
+
+        ## Write out a dataframe.
+        if path.isfile(path_to_csv):
+            with open(path_to_csv, 'a') as stream:
+                df.to_csv(stream, index=False, header=False)
+        else:
+            df.to_csv(path_to_csv, index=False, header=True)
 
 class EventPrompt(object):
     def __init__(self):
