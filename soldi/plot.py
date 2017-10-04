@@ -104,7 +104,6 @@ class Plotter(Config):
         asset_df = pd.DataFrame(asset,
                                 index=dtrange,
                                 columns=['income', 'outgo', 'asset'])
-        print(asset_df)
         today = pd.to_datetime(self.today)
 
         act_asset_df = asset_df[asset_df.index <= today]
