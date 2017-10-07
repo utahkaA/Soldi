@@ -11,12 +11,15 @@ plt.rcParams["font.size"] = 13
 plt.rcParams["figure.figsize"] = 16, 10
 
 class Plotter(Config):
-    def __init__(self):
+    def __init__(self, resolution):
         super().__init__()
         df = pd.read_csv(self.path_to_csv + "event.csv")
         self.df = self._clean(df)
 
-        self.dtrange = self._dtrange()
+        bin_functions = {'D': lambda df: pd.to_datetime(df._timestamp.map(lambda t: t.date())),}
+        self.df = self.df.assign(_bin_ts=bin_functions[resolution])
+
+        self.dtrange = self._dtrange(resolution)
         self.today = what_is_the_date_today()
 
     def _clean(self, df):
@@ -25,12 +28,12 @@ class Plotter(Config):
         df = df.reset_index(drop=True)
         return df
 
-    def _dtrange(self):
+    def _dtrange(self, resolution):
         """ make datetime range list based on Event data
         """
         start = self.df._timestamp.iloc[0]
         end = self.df._timestamp.iloc[-1]
-        dtrange = pd.date_range(start=start, end=end, freq='D')
+        dtrange = pd.date_range(start=start, end=end, freq=resolution)
         return dtrange
 
     def _plot(self, ax, act_df, pred_df, kind):
@@ -88,7 +91,7 @@ class Plotter(Config):
         asset = np.zeros((dtrange.size, 3), dtype=np.int)
         for i, date in enumerate(dtrange):
             # Extract the dataframe of target date
-            spec_df = self.df[self.df._timestamp == date]
+            spec_df = self.df[self.df._bin_ts == date]
 
             income_series = spec_df[spec_df._kind == "income"]
             income = income_series._howmuch.sum()
@@ -115,7 +118,7 @@ class Plotter(Config):
         inbank = np.zeros((dtrange.size, 3), dtype=np.int)
         for i, date in enumerate(dtrange):
             # Extract the dataframe of target date
-            spec_df = inbank_df[inbank_df._timestamp == date]
+            spec_df = inbank_df[inbank_df._bin_ts == date]
 
             income_series = spec_df[spec_df._to == "bank"]
             income = income_series._howmuch.sum()
@@ -141,7 +144,7 @@ class Plotter(Config):
         inlocal = np.zeros((dtrange.size, 3), dtype=np.int)
         for i, date in enumerate(dtrange):
             # Extract the dataframe of target date
-            spec_df = inlocal_df[inlocal_df._timestamp == date]
+            spec_df = inlocal_df[inlocal_df._bin_ts == date]
 
             income_series = spec_df[spec_df._to == "local"]
             income = income_series._howmuch.sum()
@@ -167,7 +170,7 @@ class Plotter(Config):
         inwallet = np.zeros((dtrange.size, 3), dtype=np.int)
         for i, date in enumerate(dtrange):
             # Extract the dataframe of target date
-            spec_df = inwallet_df[inwallet_df._timestamp == date]
+            spec_df = inwallet_df[inwallet_df._bin_ts == date]
 
             income_series = spec_df[spec_df._to == "wallet"]
             income = income_series._howmuch.sum()

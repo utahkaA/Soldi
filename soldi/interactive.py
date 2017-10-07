@@ -9,14 +9,69 @@ from .table import *
 from .utils import *
 
 class Interactive(Config):
-    def __init__(self):
+    def __init__(self, is_debug=False):
         super().__init__()
         self.inputed_event_records = pd.DataFrame(index=[], columns=Event().cols)
         self.inputed_receipt_records = pd.DataFrame(index=[], columns=Receipt().cols)
+        self.is_debug = False if is_debug else True
 
     def info(self):
-        click.echo("=== Interactive Mode ===")
+        addition = "(Debug) " if not self.is_debug else ""
+        click.echo("=== Interactive Mode " + addition + "===")
         click.echo("Insert data into soldi database based on your interactive input.")
+
+    def _writeout(self, df, csv_name):
+        path_to_csv = self.path_to_csv + csv_name + ".csv"
+
+        ## Write out a dataframe.
+        if path.isfile(path_to_csv):
+            with open(path_to_csv, 'a') as stream:
+                df.to_csv(stream, index=False, header=False)
+        else:
+            df.to_csv(path_to_csv, index=False, header=True)
+
+    def _receipt_prompt(self, event_record):
+        receipt_prompt = ReceiptPrompt()
+        receipt_record = receipt_prompt.start(event_record['_id'])
+
+        if self._check_receipt_content(event_record, receipt_record):
+            # Append a record to receipt dataframe.
+            self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
+                                                      receipt_record],
+                                                      ignore_index=True)
+            return True
+        else:
+            return False
+
+    def _check_receipt_content(self, event_record, receipt_record):
+        # Check receipt data
+        howmany_ser = receipt_record._howmany
+        howmuch_ser = receipt_record._howmuch
+        receipt_sum = (howmany_ser * howmuch_ser).sum()
+        if event_record._howmuch == receipt_sum:
+            click.echo(soldi + \
+                       color.SUCCESS.format(" Registered receipt data successfully."))
+            return True
+
+        elif event_record._howmuch > receipt_sum:
+            warning_msg = soldi + color.WARNING.format(" The amount of inputted " \
+                          "receipt is smaller than that of event data. Would you " \
+                          "like to register with this content?")
+            if not click.confirm(warning_msg):
+                click.echo(soldi + \
+                           " Okay then, Could you input again?")
+                return False
+            else:
+                click.echo(soldi + \
+                           color.SUCCESS.format(" Registered receipt data."))
+                return True
+        else:
+            error_msg = soldi + color.ERROR.format(" The amount of inputted " \
+                        "receipt is larger than that of event data.")
+            click.echo(error_msg)
+            click.echo(soldi + \
+                       " Could you input again?")
+            return False
 
     def prompt(self):
         while True:
@@ -24,40 +79,59 @@ class Interactive(Config):
             event_record = event_prompt.start()
             self.inputed_event_records = self.inputed_event_records.append(event_record,
                                                                            ignore_index=True)
-
+            # Input receipt information.
             if event_record['_kind'] == "outgo":
                 msg = "\n" + soldi + \
                       " You can input receipt information of your inputed event."
                 click.echo(msg)
                 if click.confirm(soldi + " Do you want to continue?"):
-                    receipt_prompt = ReceiptPrompt()
-                    receipt_record = receipt_prompt.start(event_record['_id'])
-                    self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
-                                                              receipt_record],
-                                                              ignore_index=True)
+                    while True:
+                        status = self._receipt_prompt(event_record)
+                        if status:
+                            break
+
+                        # receipt_prompt = ReceiptPrompt()
+                        # receipt_record = receipt_prompt.start(event_record['_id'])
+                        #
+                        # # Check receipt data
+                        # howmany_ser = receipt_record._howmany
+                        # howmuch_ser = receipt_record._howmuch
+                        # receipt_sum = (howmany_ser * howmuch_ser).sum()
+                        # if event_record._howmuch == receipt_sum:
+                        #     # Append a record to receipt dataframe.
+                        #     self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
+                        #                                               receipt_record],
+                        #                                               ignore_index=True)
+                        #     click.echo(soldi + \
+                        #                color.SUCCESS.format(" Registered receipt data successfully"))
+                        # elif event_record._howmuch > receipt_sum:
+                        #     warning_msg = soldi + color.WARNING.format(" The amount of inputted " \
+                        #                   "receipt is smaller than that of event data. Would you " \
+                        #                   "like to register with this content?")
+                        #     if not click.confirm(warning_msg):
+                        #         # もう一度レシートデータを登録するようにするべき
+                        #         break
+                        #     else:
+                        #         # Append a record to receipt dataframe.
+                        #         self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
+                        #                                                   receipt_record],
+                        #                                                   ignore_index=True)
+                        # else:
+                        #     error_msg = soldi + color.ERROR.format(" The amount of inputted " \
+                        #                 "receipt is larger than that of event data.")
+                        #     click.echo(error_msg)
+                        #     break
 
             if not click.confirm("\n" + soldi + " Would you like to register other event data?"):
                 break
 
-        # Write out DataFrame
-        path_to_event = self.path_to_csv + "event.csv"
-        path_to_receipt = self.path_to_csv + "receipt.csv"
+        # Write out dataframes.
+        if self.is_debug:
+            ## Write out a event dataframe.
+            self._writeout(self.inputed_event_records, "event")
 
-        if path.isfile(path_to_event):
-            with open(path_to_event, 'a') as stream:
-                self.inputed_event_records.to_csv(stream,
-                                                  index=False, header=False)
-        else:
-            self.inputed_event_records.to_csv(path_to_event,
-                                              index=False, header=True)
-
-        if path.isfile(path_to_receipt):
-            with open(path_to_receipt, 'a') as stream:
-                self.inputed_receipt_records.to_csv(stream,
-                                                    index=False, header=False)
-        else:
-            self.inputed_receipt_records.to_csv(path_to_receipt,
-                                                index=False, header=True)
+            ## Write out a receipt dataframe.
+            self._writeout(self.inputed_receipt_records, "receipt")
 
 
 class EventPrompt(object):
@@ -162,11 +236,11 @@ class ReceiptPrompt(object):
                     record[col] = event_id
 
             # Confirmation of registration.
-            if click.confirm("Would you like to register with this content?"):
+            if click.confirm(soldi + " Would you like to register with this content?"):
                 record = pd.Series(record, index=self.definition.cols)
                 inputed_records = inputed_records.append(record, ignore_index=True)
             # Whether to continue resitering.
-            if not click.confirm("\nDo you have other items yet?"):
+            if not click.confirm(soldi + " Do you have other items yet?"):
                 break
         return inputed_records
 

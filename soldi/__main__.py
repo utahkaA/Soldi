@@ -12,14 +12,15 @@ def main():
     checker = ConfigChecker()
     checker.check()
 
-def interactive_mode():
-    interactive = Interactive()
+def interactive_mode(debug):
+    interactive = Interactive(debug)
     interactive.info()
     interactive.prompt()
 
 @main.command()
-def insert():
-    interactive_mode()
+@click.option("--debug", is_flag=True)
+def insert(debug):
+    interactive_mode(debug)
 
 @main.command()
 def sort():
@@ -28,5 +29,6 @@ def sort():
 
 @main.command()
 def plot():
-    plotter = Plotter()
+    resolution = 'D'
+    plotter = Plotter(resolution)
     plotter.plot()
