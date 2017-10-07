@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
 from os import path
+import signal
 import datetime as dt
 import uuid
 import pandas as pd
@@ -13,6 +15,7 @@ class Interactive(Config):
         super().__init__()
         self.inputed_event_records = pd.DataFrame(index=[], columns=Event().cols)
         self.inputed_receipt_records = pd.DataFrame(index=[], columns=Receipt().cols)
+
         self.is_debug = False if is_debug else True
 
     def info(self):
@@ -29,6 +32,19 @@ class Interactive(Config):
                 df.to_csv(stream, index=False, header=False)
         else:
             df.to_csv(path_to_csv, index=False, header=True)
+
+    def _backup(self):
+        event_bak = self.path_to_csv + "event.bak.csv"
+        receipt_bak = self.path_to_csv + "receipt.bak.csv"
+
+        n_event = self.inputed_event_records.shape[0]
+        n_receipt = self.inputed_receipt_records.shape[0]
+        if n_event > 0:
+            # Write out a event dataframe.
+            self.inputed_event_records.to_csv(event_bak, index=False, header=True)
+        if n_receipt > 0:
+            # Write out a receipt dataframe.
+            self.inputed_receipt_records.to_csv(receipt_bak, index=False, header=True)
 
     def _receipt_prompt(self, event_record):
         receipt_prompt = ReceiptPrompt()
@@ -73,7 +89,19 @@ class Interactive(Config):
                        " Could you input again?")
             return False
 
+    def _CTRL_C_handler(self, signal, frame):
+        n_event = self.inputed_event_records.shape[0]
+        n_receipt = self.inputed_receipt_records.shape[0]
+        if n_event > 0:
+            # Write out a event dataframe.
+            self._writeout(self.inputed_event_records, "event")
+        if n_receipt > 0:
+            # Write out a receipt dataframe.
+            self._writeout(self.inputed_receipt_records, "receipt")
+        sys.exit()
+
     def prompt(self):
+        signal.signal(signal.SIGINT, self._CTRL_C_handler)
         while True:
             event_prompt = EventPrompt()
             event_record = event_prompt.start()
@@ -90,49 +118,21 @@ class Interactive(Config):
                         if status:
                             break
 
-                        # receipt_prompt = ReceiptPrompt()
-                        # receipt_record = receipt_prompt.start(event_record['_id'])
-                        #
-                        # # Check receipt data
-                        # howmany_ser = receipt_record._howmany
-                        # howmuch_ser = receipt_record._howmuch
-                        # receipt_sum = (howmany_ser * howmuch_ser).sum()
-                        # if event_record._howmuch == receipt_sum:
-                        #     # Append a record to receipt dataframe.
-                        #     self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
-                        #                                               receipt_record],
-                        #                                               ignore_index=True)
-                        #     click.echo(soldi + \
-                        #                color.SUCCESS.format(" Registered receipt data successfully"))
-                        # elif event_record._howmuch > receipt_sum:
-                        #     warning_msg = soldi + color.WARNING.format(" The amount of inputted " \
-                        #                   "receipt is smaller than that of event data. Would you " \
-                        #                   "like to register with this content?")
-                        #     if not click.confirm(warning_msg):
-                        #         # もう一度レシートデータを登録するようにするべき
-                        #         break
-                        #     else:
-                        #         # Append a record to receipt dataframe.
-                        #         self.inputed_receipt_records = pd.concat([self.inputed_receipt_records,
-                        #                                                   receipt_record],
-                        #                                                   ignore_index=True)
-                        # else:
-                        #     error_msg = soldi + color.ERROR.format(" The amount of inputted " \
-                        #                 "receipt is larger than that of event data.")
-                        #     click.echo(error_msg)
-                        #     break
-
-            if not click.confirm("\n" + soldi + " Would you like to register other event data?"):
+            # Continue or not.
+            question = "\n" + soldi + " Would you like to register other event data?"
+            if not click.confirm(question):
                 break
+            else:
+                ## Temporarily make backup when a user selected to continue inputting
+                ## event data.
+                self._backup()
 
         # Write out dataframes.
         if self.is_debug:
             ## Write out a event dataframe.
             self._writeout(self.inputed_event_records, "event")
-
             ## Write out a receipt dataframe.
             self._writeout(self.inputed_receipt_records, "receipt")
-
 
 class EventPrompt(object):
     def __init__(self):
