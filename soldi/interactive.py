@@ -166,10 +166,12 @@ class EventPrompt(object):
         return pd.Series(record, index=self.definition.cols)
 
     def _timestamp(self):
+        conversion = {"today": dt.date.today(),
+                      "yesterday": dt.date.today() - dt.timedelta(1)}
         while True:
             msg = "input events._timestamp"
             _ts = click.prompt(msg, prompt_suffix=suffix, type=str)
-
+            _ts = conversion[_ts].strftime("%Y-%m-%d") if _ts in conversion else _ts
             try:
                 return pd.to_datetime(_ts)
             except:
