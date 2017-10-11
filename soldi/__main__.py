@@ -27,8 +27,16 @@ def sort():
     controller = TableController()
     controller.sort()
 
+    msg = soldi + color.SUCCESS.format(" Tables were sorted successfully.")
+    click.echo(msg)
+
 @main.command()
 def plot():
     resolution = 'D'
     plotter = Plotter(resolution)
     plotter.plot()
+
+@main.command()
+def show():
+    controller = TableController()
+    controller.show()

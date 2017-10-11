@@ -43,3 +43,17 @@ class TableController(Config):
 
         self.event_df = self.event_df.sort_values(by="_timestamp").reset_index(drop=True)
         self.event_df.to_csv(self.path_to_event, index=False, header=True)
+
+    def show(self):
+        cols = ["_timestamp", "_where", "_howmuch", "_kind", "_from", "_to"]
+        print("," + ",".join(cols))
+        for i, row in self.event_df[cols].iterrows():
+            record = "{0},{1},{2},{3},{4},{5}"
+            record = record.format(i,
+                                   row['_timestamp'],
+                                   row['_where'],
+                                   row['_howmuch'],
+                                   row['_kind'],
+                                   row['_from'],
+                                   row['_to'])
+            print(record)
