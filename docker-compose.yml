@@ -1,0 +1,23 @@
+version: '3'
+volumes:
+  maria-data-dev:
+    external: true
+services:
+  db:
+    image: mariadb:10.3
+    volumes:
+      - maria-data-dev:/var/lib/mysql
+    ports:
+      - 3307:3306
+    extends:
+      file: ./docker/db/config.yml
+      service: config
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    volumes:
+      - ./app:/go/src/app
+    ports:
+      - "8080:8080"
+    command: go run main.go
