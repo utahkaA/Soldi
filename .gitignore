@@ -1,8 +1,1 @@
 .DS_Store
-records/
-income_outgo.csv
-aba.csv
-.config.yaml
-.python-version
-__pycache__
-soldi.egg-info/
